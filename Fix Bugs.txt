@@ -1,0 +1,25 @@
+Expanded(
+  child: TextFormField(
+    decoration: InputDecoration(labelText: 'Image URL'),
+    keyboardType: TextInputType.url,
+    textInputAction: TextInputAction.done,
+    controller: _imageUrlController,
+    onEditingComplete: () {
+      setState(() {});
+    },
+  )
+),
+
+
+HTTP Request
+final url = Uri.parse('https://flutter-update.firebaseio.com/products.json')
+http.post(url, ...)
+
+
+Sign Up Requests
+final url = Uri.parse('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=<YOUR_API_KEY>')
+http.post(url, ...)
+
+final RegExp emailValid = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+final RegExp passValid = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
+    
