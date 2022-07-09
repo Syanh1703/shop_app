@@ -26,23 +26,21 @@ class Product with ChangeNotifier{
     notifyListeners();
   }
 
-  Future<void> toggleFavBtn() async {
+  Future<void> toggleFavBtn(String token, String userId) async {
     final bool oldStatus = isFavourite;
     //invert the value of isFavourite
     isFavourite = !isFavourite;
 
     //29_06: Patch request to update the Firebase
-    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products/$productId.json');
+    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/userFav/$userId/$productId.json?auth=$token');
     try{
-      final response = await http.patch(url, body: json.encode(
-          {
-            'isFav': isFavourite,
-          }));
+      final response = await http.put(url, body: json.encode(isFavourite),);
       if(response.statusCode >= 400){
         _setNewFav(oldStatus);
       }
     }catch(error){
       _setNewFav(oldStatus);
     }
+    notifyListeners();
 }
 }

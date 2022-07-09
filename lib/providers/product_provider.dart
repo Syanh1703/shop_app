@@ -5,6 +5,10 @@ import 'dart:convert';
 import '../models/http_exception.dart';
 
 class ProductsProvider with ChangeNotifier{//Mixin
+
+  final String authToken;
+  final String userId;
+
   //14_06: Define the list of products
   List<Product> _productsProviderList = [
     // Product(
@@ -41,11 +45,13 @@ class ProductsProvider with ChangeNotifier{//Mixin
     // ),
   ];
 
+  ProductsProvider(this.authToken, this.userId,this._productsProviderList);
 
   List<Product> get item{
     //make sure all the changes happen in this class and change correctly
     return [..._productsProviderList];
   }
+
 
   List<Product> get favItems{
     return _productsProviderList.where((productItem) => productItem.isFavourite).toList();
@@ -56,16 +62,18 @@ class ProductsProvider with ChangeNotifier{//Mixin
   }
 
   //28_06: Fetching the product
-  Future<void> fetchAndSetProduct() async {
-    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products.json'); /// Remove json will cause error
+  Future<void> fetchAndSetProduct([bool filterByUser = false]) async {
+    final filterString = filterByUser ? 'orderBy="creatorId"&equalTo="$userId"' : '';
+    var url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products.json?auth=$authToken&$filterString'); /// Remove json will cause error
     try{
       final response = await http.get(url);
       //28_06: Extract fetched data
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      //04_07: Fetch the Fav property
+      url =  Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/userFav/$userId.json?auth=$authToken');
+      final userFavResponse = await http.get(url);
+      final userFavData = json.decode(userFavResponse.body);
       final List<Product> finalProductList = [];
-      if(extractedData==null){
-        return;
-      }
       extractedData.forEach((prodId, prodVal) {
           finalProductList.add(Product(
               productId: prodId,
@@ -73,7 +81,7 @@ class ProductsProvider with ChangeNotifier{//Mixin
               productDes: prodVal['des'],
               productPrice: prodVal['price'],
               productImgUrl: prodVal['imageUrl'],
-              isFavourite: prodVal['isFav'],
+              isFavourite: userFavData == null ? false : userFavData[prodId] ?? false ,
             ),
           );
       });
@@ -85,7 +93,7 @@ class ProductsProvider with ChangeNotifier{//Mixin
   }
   Future<void> addProducts(Product product) async {
     //27_06: Send HTTP request to send the data to Firebase
-    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products.json'); /// Remove json will cause error
+    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products.json?auth=$authToken'); /// Remove json will cause error
     try {
         final response = await http.post(url,
             body: //Use JSON
@@ -94,7 +102,7 @@ class ProductsProvider with ChangeNotifier{//Mixin
               'des' : product.productDes,
               'imageUrl': product.productImgUrl,
               'price': product.productPrice,
-              'isFav': product.isFavourite,
+              'creatorId': userId
             })
         );
         //27_06: Execute the code when the upper part is done
@@ -118,7 +126,7 @@ class ProductsProvider with ChangeNotifier{//Mixin
     //28_06: Store the update product on the data server
      final prodIndex = _productsProviderList.indexWhere((element) => element.productId == id);
      if(prodIndex>=0){
-       final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products/$id.json');
+       final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken');
        try{
          await http.patch(url,
              body: json.encode(
@@ -127,7 +135,6 @@ class ProductsProvider with ChangeNotifier{//Mixin
                    'des': product.productDes,
                    'imageUrl': product.productImgUrl,
                    'price': product.productPrice,
-                   'isFav': product.isFavourite
                  }
              )
          );
@@ -142,7 +149,7 @@ class ProductsProvider with ChangeNotifier{//Mixin
   }
 
   Future<void> deleteProduct(String id) async {
-    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products/$id.json');
+    final url = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken');
     //28_06: Utilize optimistic updating process => remove from the list, not in the memory
     final existingProductIndex = _productsProviderList.indexWhere((element) => element.productId == id);
     var existingProduct = _productsProviderList[existingProductIndex];//store the reference

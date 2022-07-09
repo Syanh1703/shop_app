@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/providers/auth_providers.dart';
 import '../models/cart.dart';
 import '../models/product.dart';
 import '../screens/product_detail_screen.dart';
@@ -10,6 +11,7 @@ class ProductItem extends StatelessWidget {
   Widget build(BuildContext context) {
     //final product = Provider.of<Product>(context);
     final cart = Provider.of<Cart>(context, listen: false);
+    final authToken = Provider.of<AuthProvider>(context,listen: false);
 
     return Consumer<Product>(
       builder: (ctx, product, child) =>  GridTile(child:
@@ -19,13 +21,20 @@ class ProductItem extends StatelessWidget {
               arguments: product.productId,
             );
           },
-          child: Image.network(product.productImgUrl, fit: BoxFit.cover,),
+          child: Hero(
+            tag: product.productId, //08_07: Decide what image wii flow into the new screen
+            child: FadeInImage(
+              placeholder: const AssetImage('lib/assets/image/product-placeholder.png'),
+              image: NetworkImage(product.productImgUrl),
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
         footer: GridTileBar(
           leading: IconButton(
             icon: Icon(product.isFavourite ? Icons.favorite : Icons.favorite_border),
             onPressed: () {
-              product.toggleFavBtn();
+              product.toggleFavBtn(authToken.token, authToken.userId);
             },
             color: Colors.red,
           ),

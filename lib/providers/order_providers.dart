@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shop_app/models/cart.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop_app/models/product.dart';
-import 'package:shop_app/widgets/cart_item.dart';
 
 class OrderItem{
   final String id;
@@ -22,13 +20,17 @@ class OrderItem{
 
 class OrdersProvider with ChangeNotifier{
   List<OrderItem> _orders = [];
+  final String authToken;
+  final String userId;
 
   List<OrderItem> get orders{
     return[..._orders];//20_06: Can edit order outside this class
   }
 
+  OrdersProvider(this.authToken,this._orders, this.userId);
+
   Future<void> fetchAndSetOrders() async {
-    final orderUrl = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/orders.json');
+    final orderUrl = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/orders/$userId.json?auth=$authToken');
     final response = await http.get(orderUrl);
     final List<OrderItem> loadedOrders = [];
     final extractedOrder = json.decode(response.body) as Map<String, dynamic>;
@@ -55,7 +57,7 @@ class OrdersProvider with ChangeNotifier{
   }
 
   Future<void> addOrders(List<CartItems> cartProduct, double total) async {
-    final orderUrl = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/orders.json');
+    final orderUrl = Uri.parse('https://shopapp-375a7-default-rtdb.firebaseio.com/orders/$userId.json?auth=$authToken');
     final timestamp = DateTime.now();
 
     try{

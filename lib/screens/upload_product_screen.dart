@@ -9,12 +9,11 @@ class UploadProductScreen extends StatelessWidget {
 
   static const uploadProductRouteName = '/upload_product';
   Future<void> _refreshPage(BuildContext context) async {
-    await Provider.of<ProductsProvider>(context, listen: false).fetchAndSetProduct();
+    await Provider.of<ProductsProvider>(context, listen: false).fetchAndSetProduct(true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final productsData = Provider.of<ProductsProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Product', style: TextStyle(
@@ -27,23 +26,31 @@ class UploadProductScreen extends StatelessWidget {
             }, icon: const Icon(Icons.add))
         ],
       ),
-      body: RefreshIndicator(
-        //28_06: Refresh the page to
-        onRefresh: () => _refreshPage(context),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: ListView.builder(itemBuilder: (_, index) => Column(
-            children: <Widget>[
-              UploadProductItem(
-                id: productsData.item[index].productId,
-                title: productsData.item[index].productName,
-                des: productsData.item[index].productDes,
-                image: productsData.item[index].productImgUrl,
-                price: productsData.item[index].productPrice,),
-              const Divider(),
-            ],
+      body: FutureBuilder(
+        future: _refreshPage(context),
+        builder:(ctx,snapshot) => snapshot.connectionState == ConnectionState.waiting ? const Center(
+          child: CircularProgressIndicator(),
+        ) : RefreshIndicator(
+          //28_06: Refresh the page to
+          onRefresh: () => _refreshPage(context),
+          child: Consumer<ProductsProvider>(
+            builder: (ctx, productsData, _) => Padding(
+              padding: const EdgeInsets.all(8),
+              child: ListView.builder(
+                itemBuilder: (_, index) => Column(
+                children: <Widget>[
+                  UploadProductItem(
+                    id: productsData.item[index].productId,
+                    title: productsData.item[index].productName,
+                    des: productsData.item[index].productDes,
+                    image: productsData.item[index].productImgUrl,
+                    price: productsData.item[index].productPrice,),
+                   const Divider(),
+                ],
+              ),
+                itemCount: productsData.item.length,),
+            ),
           ),
-            itemCount: productsData.item.length,),
         ),
       ),
       drawer: AppDrawer(),

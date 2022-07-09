@@ -12,7 +12,7 @@ class OrderScreen extends StatefulWidget {
   State<OrderScreen> createState() => _OrderScreenState();
 }
 
-class _OrderScreenState extends State<OrderScreen> {
+class _OrderScreenState extends State<OrderScreen> with SingleTickerProviderStateMixin {
   late Future _ordersFuture;
   Future _obtainFutureOrders(){
     return Provider.of<OrdersProvider>(context, listen: false).fetchAndSetOrders();
@@ -23,6 +23,7 @@ class _OrderScreenState extends State<OrderScreen> {
      _ordersFuture = _obtainFutureOrders();
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     const String orderScreen = 'Order';
@@ -40,13 +41,13 @@ class _OrderScreenState extends State<OrderScreen> {
         if(dataSnapshot.connectionState == ConnectionState.waiting){
           return const Center(child: CircularProgressIndicator());
         }
-        else if(dataSnapshot.error == null){
-          return const Center(child: Text('Error in displaying orders'),);
-        }
+        // else if(dataSnapshot.error == null){
+        //   return const Center(child: Text('Error in displaying orders'),);
+        // }
         else{
           return Consumer<OrdersProvider>(
             builder: (ctx,ordersProvider, child) => ListView.builder(
-              itemBuilder: (ctx, index) => OrderData(ordersProvider.orders[index]),
+              itemBuilder: (ctx, index) => OrderData(ordersProvider.orders[index],),
               itemCount: ordersProvider.orders.length,
             ),
           );
